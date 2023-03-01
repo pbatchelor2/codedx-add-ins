@@ -1,0 +1,40 @@
+packages = './...' # packages to process (for help specifying packages, run: go help packages)
+options = ['--exclude-gitignore']       # kics options (must not conflict with options set by Code Dx)
+
+[source-code]
+
+relativeDirectory=''                 # source code directory specified by relative directory name (overrides projectFileDirectoryPatterns)
+projectFileDirectoryPatterns=['*.*'] # KICS will make it's own decisions about files to scan (use options to configure if required)
+
+
+[request]  # (reserved for Code Dx use)
+
+# The image name contains the Docker image that handles this scan request file.
+#
+imageName = "codedx/codedx-kics-runner:latest"
+
+# The work directory stores k8s secrets, trusted CA certificates,a copy of the scan request
+# file, and the exit code file. The user running the Docker image *must* have write access
+# to the work directory.
+#
+# $workDirectory/analysis-exit-code  - exit code of the shell command
+# $workDirectory/ca-certificates     - trusted CA certificates
+# $workDirectory/config/request.toml - a copy of the scan request file
+# $workDirectory/input               - analysis input
+# $workDirectory/workflow-secrets    - workflow secrets
+#
+workDirectory = "/opt/codedx/kics/work"
+
+# The shell cmd to run as the entry point for the tool.
+#
+shellCmd = '''
+	source=$(ls /opt/codedx/kics/work/input)
+	pwsh /opt/codedx/kics/script/Invoke-Kics.ps1 \
+		"/opt/codedx/kics/work/input/$source" \
+		/opt/codedx/kics/work/output \
+		/opt/codedx/kics/work/config/request.toml
+'''
+
+# The result file contains the tool output provided to Code Dx.
+#
+resultFilePath = "/opt/codedx/kics/work/output/kicsreport.xml"
